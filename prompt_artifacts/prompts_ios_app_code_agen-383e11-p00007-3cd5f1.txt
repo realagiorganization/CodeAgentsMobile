@@ -1,14 +1,14 @@
 Prompt ID: prompts_ios_app_code_agen-383e11-p00007-3cd5f1
-Timestamp: 2026-03-01T18:16:13.926260+00:00
+Timestamp: 2026-03-01T19:16:52.534778+00:00
 Source: discord
-Queue: guild-1353735964635435100-run-22549043813::prompt_queue::discord_1353735964635435100_1353735964635435100_1462831447122514177_realagicorp_iosapp_prompts_ios_app_code_agent_mobile_1462831447122514177_json
+Queue: guild-1353735964635435100-run-22550018723::prompt_queue::discord_1353735964635435100_1353735964635435100_1462831447122514177_realagicorp_iosapp_prompts_ios_app_code_agent_mobile_1462831447122514177_json
 Run: 1/1
 Content:
 Discord channel: prompts_ios_app_code_agent_mobile
 Channel ID: 1462831447122514177
 Queue label: prompts_ios_app_code_agen-383e11
 Messages aggregated: 7
-Available repository: realagiorganization/CodeAgentsMobile -> /tmp/repositories/realagiorganization_CodeAgentsMobile
+Available repository: realagiorganization/CodeAgentsMobile -> /tmp/repositories/realagiorganization--CodeAgentsMobile
 
 Discord channel: prompts_ios_app_code_agent_mobile | ID: 1462831447122514177 | Reaction filter: :white_check_mark:
 
