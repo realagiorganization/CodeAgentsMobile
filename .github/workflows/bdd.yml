@@ -1,0 +1,43 @@
+name: BDD Suite
+
+on:
+  push:
+    branches: ["main", "pipeline-discord-mode"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  bdd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install fastlane
+        run: gem install fastlane -NV
+
+      - name: Run BDD specs via fastlane
+        run: fastlane bdd
+
+      - name: Render VHS of BDD run
+        uses: charmbracelet/vhs-action@v2
+        with:
+          tape: vhs/bdd-console.tape
+          output: assets/bdd-console.gif
+
+      - name: Upload GIF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bdd-console-gif
+          path: assets/bdd-console.gif
+          if-no-files-found: error

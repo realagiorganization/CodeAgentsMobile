@@ -1,0 +1,60 @@
+fastlane_version "2.220.0"
+
+def project_name
+  ENV.fetch("XCODE_PROJECT", "CodeAgentsMobile.xcodeproj")
+end
+
+def scheme_name
+  ENV.fetch("SCHEME", "CodeAgentsMobile")
+end
+
+def export_method
+  ENV.fetch("EXPORT_METHOD", "app-store")
+end
+
+def api_key_from_env
+  return nil unless ENV['APP_STORE_KEY_ID']
+  app_store_connect_api_key(
+    key_id: ENV['APP_STORE_KEY_ID'],
+    issuer_id: ENV['APP_STORE_ISSUER_ID'],
+    key_content: ENV['APP_STORE_KEY_CONTENT'],
+    is_key_content_base64: true
+  )
+end
+
+platform :ios do
+  desc "Run unit tests"
+  lane :tests do
+    scan(
+      project: project_name,
+      scheme: scheme_name,
+      devices: [ENV.fetch("SIMULATOR_DEVICE", "iPhone 15")],
+      clean: true,
+      fail_build: true
+    )
+  end
+
+  desc "Run BDD specs"
+  lane :bdd do
+    sh("python", "-m", "pip", "install", "-r", "bdd/requirements.txt")
+    sh("python", "-m", "pytest", "bdd", "-q")
+  end
+
+  desc "Build and upload to TestFlight"
+  lane :beta do
+    api_key = api_key_from_env
+    build_app(
+      project: project_name,
+      scheme: scheme_name,
+      export_method: export_method
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      apple_id: ENV['APPLE_ID'],
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,
+      groups: (ENV['TESTFLIGHT_GROUPS']&.split(',') || [])
+    )
+  end
+end

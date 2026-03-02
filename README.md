@@ -3,6 +3,9 @@
 An mobile client to Claude Code for iOS.
 Allows you to run Claude code on any Linux ssh server.
 
+![iOS Build & TestFlight](https://github.com/realagiorganization/CodeAgentsMobile/actions/workflows/ios-ci.yml/badge.svg)
+![BDD Suite](https://github.com/realagiorganization/CodeAgentsMobile/actions/workflows/bdd.yml/badge.svg)
+
 **TestFlight Beta**
 
 https://testflight.apple.com/join/eUpweBZV
@@ -35,6 +38,20 @@ https://apps.apple.com/app/codeagents-mobile/id6748273716
 - iOS 17.0+
 - Xcode 15+
 - Swift 5.9+
+
+## CI & Quality
+- `fastlane tests` runs unit tests on macOS runners via the **iOS Build & TestFlight** workflow.
+- `fastlane beta` builds and uploads to TestFlight (requires App Store Connect secrets in GitHub Actions).
+- `fastlane bdd` executes executable specs (pytest-bdd) and produces the VHS recording below via the **BDD Suite** workflow.
+- BDD console demo (auto-regenerated in CI):
+
+![BDD console demo](assets/bdd-console.gif)
+
+Run locally:
+```bash
+python -m pip install -r bdd/requirements.txt
+python -m pytest bdd -q
+```
 
 ## Getting Started
 
