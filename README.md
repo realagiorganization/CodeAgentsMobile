@@ -1,7 +1,10 @@
 # CodeAgents Mobile
 
-An mobile client to Claude Code for iOS.
-Allows you to run Claude code on any Linux ssh server.
+[![iOS Build & TestFlight](https://github.com/realagiorganization/CodeAgentsMobile/actions/workflows/ios-ci.yml/badge.svg)](https://github.com/realagiorganization/CodeAgentsMobile/actions/workflows/ios-ci.yml)
+[![BDD Suite](https://github.com/realagiorganization/CodeAgentsMobile/actions/workflows/bdd.yml/badge.svg)](https://github.com/realagiorganization/CodeAgentsMobile/actions/workflows/bdd.yml)
+
+A mobile client to Claude Code for iOS.
+It lets you run Claude Code on any Linux SSH server from a native iPhone interface.
 
 **TestFlight Beta**
 
@@ -35,6 +38,29 @@ https://apps.apple.com/app/codeagents-mobile/id6748273716
 - iOS 17.0+
 - Xcode 15+
 - Swift 5.9+
+
+## CI & Quality
+- `bundle exec fastlane tests` runs native tests on macOS runners via the **iOS Build & TestFlight** workflow.
+- `bundle exec fastlane beta` builds and uploads to TestFlight and requires App Store Connect secrets in GitHub Actions.
+- `bundle exec fastlane bdd` executes executable specs and the **BDD Suite** workflow renders the VHS recording below.
+- BDD console demo (auto-regenerated in CI):
+
+![BDD console demo](assets/bdd-console.gif)
+
+Run locally:
+```bash
+bundle install
+python -m pip install -r bdd/requirements.txt
+python -m pytest bdd -q
+```
+
+## Documentation
+
+- [docs/DEVPLAN.md](docs/DEVPLAN.md) tracks roadmap work, including planned GitHub/Discord login UI and RevenueCat subscription flows.
+- [docs/USAGE.md](docs/USAGE.md) covers local setup, Fastlane usage, and CI entry points.
+- [docs/ENVS.md](docs/ENVS.md) lists required and optional environment variables.
+- [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md) records execution assumptions used for autonomous runs.
+- [docs/AGENTS.md](docs/AGENTS.md) documents the self-prompts and guardrails used while modifying the repo.
 
 ## Getting Started
 

@@ -1,0 +1,58 @@
+name: BDD Suite
+
+on:
+  push:
+    branches: ["main", "pipeline-discord-mode"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: bdd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bdd:
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: bdd/requirements.txt
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install Ruby gems
+        run: bundle install --jobs 4 --retry 3
+
+      - name: Prepare artifacts
+        run: mkdir -p artifacts
+
+      - name: Run BDD specs via fastlane
+        run: |
+          set -o pipefail
+          bundle exec fastlane bdd | tee artifacts/bdd-output.txt
+
+      - name: Render VHS of BDD run
+        uses: charmbracelet/vhs-action@v2
+        with:
+          tape: vhs/bdd-console.tape
+          output: assets/bdd-console.gif
+
+      - name: Upload GIF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bdd-console-gif
+          path: |
+            assets/bdd-console.gif
+            artifacts/bdd-output.txt
+          if-no-files-found: error

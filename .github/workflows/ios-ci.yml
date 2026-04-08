@@ -1,0 +1,86 @@
+name: iOS Build & TestFlight
+
+on:
+  push:
+    branches: ["main", "pipeline-discord-mode"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: macos-14
+    env:
+      CI: "true"
+      SCHEME: CodeAgentsMobile
+      XCODE_PROJECT: CodeAgentsMobile.xcodeproj
+      ENABLE_LIVE_SSH_TESTS: "0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install Ruby gems
+        run: bundle install --jobs 4 --retry 3
+
+      - name: Run unit tests
+        run: bundle exec fastlane tests
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-artifacts
+          path: |
+            fastlane/test_output
+            fastlane/build_logs
+          if-no-files-found: warn
+
+  beta:
+    needs: tests
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    runs-on: macos-14
+    env:
+      CI: "true"
+      SCHEME: CodeAgentsMobile
+      XCODE_PROJECT: CodeAgentsMobile.xcodeproj
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install Ruby gems
+        run: bundle install --jobs 4 --retry 3
+
+      - name: Build and upload to TestFlight
+        env:
+          APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
+          APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
+          APP_STORE_KEY_CONTENT: ${{ secrets.APP_STORE_KEY_CONTENT }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+          ITC_TEAM_ID: ${{ secrets.ITC_TEAM_ID }}
+          TESTFLIGHT_GROUPS: ${{ secrets.TESTFLIGHT_GROUPS }}
+          APP_IDENTIFIER: ${{ secrets.APP_IDENTIFIER }}
+        run: bundle exec fastlane beta
+
+      - name: Upload release artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release-artifacts
+          path: |
+            build
+            fastlane/build_logs
+          if-no-files-found: warn

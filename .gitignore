@@ -80,6 +80,7 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+fastlane/build_logs
 
 # Code Injection
 #
@@ -151,6 +152,8 @@ Temporary Items
 
 # Debug logs
 *.log
+*.pyc
+__pycache__/
 
 # Generated files
 *.generated.swift

@@ -9,21 +9,37 @@ import Testing
 @testable import CodeAgentsMobile
 import Foundation
 
+private enum LiveSSHTestConfig {
+    static let environment = ProcessInfo.processInfo.environment
+    static let isEnabled = environment["ENABLE_LIVE_SSH_TESTS"] == "1"
+    static let host = environment["LIVE_SSH_HOST"] ?? "5.75.250.220"
+    static let port = Int(environment["LIVE_SSH_PORT"] ?? "22") ?? 22
+    static let username = environment["LIVE_SSH_USERNAME"] ?? "root"
+    static let password = environment["LIVE_SSH_PASSWORD"] ?? ""
+    static let projectPath = environment["LIVE_SSH_PROJECT_PATH"] ?? "/root/projects/First"
+    static let apiKey = environment["LIVE_SSH_ANTHROPIC_API_KEY"] ?? ""
+}
+
 struct DirectSSHTest {
     
     @Test func testDirectSSHStreaming() async throws {
+        guard LiveSSHTestConfig.isEnabled else {
+            print("Skipping live SSH test. Set ENABLE_LIVE_SSH_TESTS=1 to opt in.")
+            return
+        }
+
         print("🚀 Starting Direct SSH Streaming Test")
         
         // Server configuration
         let server = Server(
             name: "Test Server",
-            host: "5.75.250.220",
-            port: 22,
-            username: "root"
+            host: LiveSSHTestConfig.host,
+            port: LiveSSHTestConfig.port,
+            username: LiveSSHTestConfig.username
         )
         
         // Store password
-        try KeychainManager.shared.storePassword("", for: server.id)
+        try KeychainManager.shared.storePassword(LiveSSHTestConfig.password, for: server.id)
         
         // Connect
         print("📡 Connecting to server...")
@@ -65,8 +81,8 @@ struct DirectSSHTest {
         // Test 3: Claude command
         print("\n📌 Test 3: Claude command")
         let claudeCommand = """
-            cd /root/projects/First && \
-            export ANTHROPIC_API_KEY="" && \
+            cd '\(LiveSSHTestConfig.projectPath)' && \
+            export ANTHROPIC_API_KEY="\(LiveSSHTestConfig.apiKey)" && \
             timeout 20 claude --print "Say hello" \
             --output-format stream-json --verbose \
             --allowedTools Bash,Write,Edit,MultiEdit,NotebookEdit,Read,LS,Grep,Glob,WebFetch 2>&1

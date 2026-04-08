@@ -9,19 +9,35 @@ import Testing
 @testable import CodeAgentsMobile
 import Foundation
 
+private enum LiveSSHClaudeConfig {
+    static let environment = ProcessInfo.processInfo.environment
+    static let isEnabled = environment["ENABLE_LIVE_SSH_TESTS"] == "1"
+    static let host = environment["LIVE_SSH_HOST"] ?? "5.75.250.220"
+    static let port = Int(environment["LIVE_SSH_PORT"] ?? "22") ?? 22
+    static let username = environment["LIVE_SSH_USERNAME"] ?? "root"
+    static let password = environment["LIVE_SSH_PASSWORD"] ?? ""
+    static let projectPath = environment["LIVE_SSH_PROJECT_PATH"] ?? "/root/projects/First"
+    static let apiKey = environment["LIVE_SSH_ANTHROPIC_API_KEY"] ?? ""
+}
+
 struct SSHClaudeIntegrationTest {
     
     // Test configuration - update these with your real server details
     struct TestConfig {
-        static let host = "5.75.250.220"
-        static let port = 22
-        static let username = "root"
-        static let password = ""
-        static let projectPath = "/root/projects/First"
-        static let apiKey = ""
+        static let host = LiveSSHClaudeConfig.host
+        static let port = LiveSSHClaudeConfig.port
+        static let username = LiveSSHClaudeConfig.username
+        static let password = LiveSSHClaudeConfig.password
+        static let projectPath = LiveSSHClaudeConfig.projectPath
+        static let apiKey = LiveSSHClaudeConfig.apiKey
     }
     
     @Test func testClaudeBasicCommand() async throws {
+        guard LiveSSHClaudeConfig.isEnabled else {
+            print("Skipping live SSH integration test. Set ENABLE_LIVE_SSH_TESTS=1 to opt in.")
+            return
+        }
+
         // Simpler test to verify Claude is working
         let server = Server(
             name: "Test Server",
@@ -52,6 +68,11 @@ struct SSHClaudeIntegrationTest {
     }
     
     @Test func testClaudeCommandStreaming() async throws {
+        guard LiveSSHClaudeConfig.isEnabled else {
+            print("Skipping live SSH integration test. Set ENABLE_LIVE_SSH_TESTS=1 to opt in.")
+            return
+        }
+
         // Create server configuration
         let server = Server(
             name: "Test Server",
@@ -148,6 +169,11 @@ struct SSHClaudeIntegrationTest {
     }
     
     @Test func testClaudeInstallation() async throws {
+        guard LiveSSHClaudeConfig.isEnabled else {
+            print("Skipping live SSH integration test. Set ENABLE_LIVE_SSH_TESTS=1 to opt in.")
+            return
+        }
+
         // Test if Claude is installed on the server
         let server = Server(
             name: "Test Server",
@@ -174,6 +200,11 @@ struct SSHClaudeIntegrationTest {
     }
     
     @Test func testSimpleStreamingCommand() async throws {
+        guard LiveSSHClaudeConfig.isEnabled else {
+            print("Skipping live SSH integration test. Set ENABLE_LIVE_SSH_TESTS=1 to opt in.")
+            return
+        }
+
         // Test streaming with a simple command that outputs multiple lines
         let server = Server(
             name: "Test Server",
@@ -207,6 +238,11 @@ struct SSHClaudeIntegrationTest {
     }
     
     @Test func testSSHConnectionOnly() async throws {
+        guard LiveSSHClaudeConfig.isEnabled else {
+            print("Skipping live SSH integration test. Set ENABLE_LIVE_SSH_TESTS=1 to opt in.")
+            return
+        }
+
         // Simple connection test
         let server = Server(
             name: "Test Server",
