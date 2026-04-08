@@ -24,22 +24,28 @@ class Entitlement:
     identifier: str
     price: str
     status: str = "inactive"
+    billing_status: str = "inactive"
 
 
 class AppSimulation:
     def __init__(self) -> None:
         self.identities: Dict[str, Identity] = {}
         self.current_provider: Optional[str] = None
+        self.current_auth_method: Optional[str] = None
+        self.credentials: Dict[str, str] = {}
         self.server: Optional[ServerState] = None
         self.entitlements: Dict[str, Entitlement] = {}
+        self.previous_purchases: List[str] = []
         self.chat_history: List[str] = []
         self.workspace_root: Optional[str] = None
         self.files: Dict[str, str] = {}
         self.cloud_tokens: Dict[str, str] = {}
+        self.delete_result: Optional[bool] = None
 
     # Authentication
     def select_provider(self, provider: str, scopes: List[str]) -> None:
         self.current_provider = provider
+        self.current_auth_method = "oauth"
         self.identities[provider] = Identity(provider=provider, scopes=scopes)
 
     def complete_oauth(self, provider: str) -> None:
@@ -62,6 +68,15 @@ class AppSimulation:
         identity = self.identities.get(provider)
         return bool(identity and identity.authenticated)
 
+    def store_credential(self, kind: str, value: str) -> None:
+        self.credentials[kind] = value
+
+    def select_auth_method(self, method: str) -> None:
+        self.current_auth_method = method
+
+    def has_credential(self, kind: str) -> bool:
+        return bool(self.credentials.get(kind))
+
     # Chat
     def send_chat(self, prompt: str) -> str:
         if not self.current_provider or not self.is_authenticated(self.current_provider):
@@ -74,10 +89,10 @@ class AppSimulation:
     def configure_cloud(self, provider: str, token: str) -> None:
         self.cloud_tokens[provider] = token
 
-    def provision_droplet(self, size: str, region: str) -> ServerState:
-        if "DigitalOcean" not in self.cloud_tokens:
-            raise RuntimeError("missing DigitalOcean token")
-        self.server = ServerState(provider="DigitalOcean", size=size, region=region)
+    def provision_server(self, provider: str, size: str, region: str) -> ServerState:
+        if provider not in self.cloud_tokens:
+            raise RuntimeError(f"missing {provider} token")
+        self.server = ServerState(provider=provider, size=size, region=region)
         # Simulate tasks finishing
         self.server.status = "ready"
         self.server.claude_cli_present = True
@@ -85,14 +100,32 @@ class AppSimulation:
 
     # RevenueCat
     def add_offering(self, identifier: str, price: str) -> None:
-        self.entitlements[identifier] = Entitlement(identifier=identifier, price=price, status="inactive")
+        self.entitlements[identifier] = Entitlement(
+            identifier=identifier,
+            price=price,
+            status="inactive",
+            billing_status="inactive",
+        )
 
     def purchase_plan(self, identifier: str) -> Entitlement:
         entitlement = self.entitlements.get(identifier)
         if not entitlement:
             raise RuntimeError("offering missing")
         entitlement.status = "active"
+        entitlement.billing_status = "active"
         return entitlement
+
+    def mark_previous_purchase(self, identifier: str) -> None:
+        if identifier not in self.previous_purchases:
+            self.previous_purchases.append(identifier)
+
+    def restore_purchases(self) -> None:
+        for identifier in self.previous_purchases:
+            entitlement = self.entitlements.get(identifier)
+            if entitlement is None:
+                continue
+            entitlement.status = "active"
+            entitlement.billing_status = "restored"
 
     # Files
     def create_workspace(self, name: str) -> None:

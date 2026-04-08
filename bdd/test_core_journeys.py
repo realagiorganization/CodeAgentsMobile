@@ -56,21 +56,27 @@ def refresh_token(app_state):
     app_state.refresh_token(app_state.current_provider)
 
 
-@given("DigitalOcean API token is configured")
-def set_do_token(app_state):
-    app_state.configure_cloud("DigitalOcean", token="do-test-token")
+@given(parsers.parse("{provider} API token is configured"))
+def set_cloud_token(app_state, provider):
+    app_state.configure_cloud(provider, token=f"{provider.lower()}-test-token")
 
 
-@when(parsers.parse('the user provisions a new "{size}" droplet in region "{region}"'))
-def provision_droplet(app_state, size, region):
-    app_state.provision_droplet(size=size, region=region)
+@when(parsers.parse('the user provisions a new "{size}" server in region "{region}" for "{provider}"'))
+def provision_server(app_state, size, region, provider):
+    app_state.provision_server(provider=provider, size=size, region=region)
 
 
-@then("the droplet is marked ready with Claude CLI installed")
-def droplet_ready(app_state):
+@then("the server is marked ready with Claude CLI installed")
+def server_ready(app_state):
     assert app_state.server is not None
     assert app_state.server.status == "ready"
     assert app_state.server.claude_cli_present is True
+
+
+@then(parsers.parse('the server provider is "{provider}"'))
+def server_provider(app_state, provider):
+    assert app_state.server is not None
+    assert app_state.server.provider == provider
 
 
 @given(parsers.parse('RevenueCat offering "{identifier}" priced "{price}" is available'))
@@ -78,9 +84,19 @@ def revenuecat_offering(app_state, identifier, price):
     app_state.add_offering(identifier, price)
 
 
+@given(parsers.parse('the subscription "{identifier}" has previous purchase history'))
+def previous_purchase(app_state, identifier):
+    app_state.mark_previous_purchase(identifier)
+
+
 @when(parsers.parse('the user purchases the "{identifier}" plan'))
 def purchase_plan(app_state, identifier):
     app_state.purchase_plan(identifier)
+
+
+@when("the user restores purchases")
+def restore_purchases(app_state):
+    app_state.restore_purchases()
 
 
 @then(parsers.parse('the entitlement "{identifier}" becomes active'))
@@ -93,7 +109,37 @@ def entitlement_active(app_state, identifier):
 @then(parsers.parse('billing status is "{status}"'))
 def billing_status(app_state, status):
     ent = next(iter(app_state.entitlements.values()))
-    assert ent.status == status
+    assert ent.billing_status == status
+
+
+@given(parsers.parse('the user stores API key credential "{value}"'))
+def store_api_key(app_state, value):
+    app_state.store_credential("apiKey", value)
+
+
+@given(parsers.parse('the user stores auth token credential "{value}"'))
+def store_auth_token(app_state, value):
+    app_state.store_credential("token", value)
+
+
+@when(parsers.parse('the user switches the active auth method to "{method}"'))
+def switch_auth_method(app_state, method):
+    app_state.select_auth_method(method)
+
+
+@then(parsers.parse('the active auth method is "{method}"'))
+def active_auth_method(app_state, method):
+    assert app_state.current_auth_method == method
+
+
+@then("the stored API key credential remains available")
+def stored_api_key(app_state):
+    assert app_state.has_credential("apiKey")
+
+
+@then("the stored auth token credential remains available")
+def stored_auth_token(app_state):
+    assert app_state.has_credential("token")
 
 
 @given(parsers.parse('an authenticated project workspace "{name}" exists on the server'))

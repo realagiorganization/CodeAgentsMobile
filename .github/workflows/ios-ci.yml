@@ -6,9 +6,18 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     runs-on: macos-14
+    env:
+      CI: "true"
+      SCHEME: CodeAgentsMobile
+      XCODE_PROJECT: CodeAgentsMobile.xcodeproj
+      ENABLE_LIVE_SSH_TESTS: "0"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,18 +27,30 @@ jobs:
         with:
           ruby-version: '3.2'
 
-      - name: Install fastlane
-        run: gem install fastlane -NV
+      - name: Install Ruby gems
+        run: bundle install --jobs 4 --retry 3
 
       - name: Run unit tests
-        env:
-          SCHEME: CodeAgentsMobile
-        run: fastlane tests
+        run: bundle exec fastlane tests
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-artifacts
+          path: |
+            fastlane/test_output
+            fastlane/build_logs
+          if-no-files-found: warn
 
   beta:
     needs: tests
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: macos-14
+    env:
+      CI: "true"
+      SCHEME: CodeAgentsMobile
+      XCODE_PROJECT: CodeAgentsMobile.xcodeproj
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,8 +60,8 @@ jobs:
         with:
           ruby-version: '3.2'
 
-      - name: Install fastlane
-        run: gem install fastlane -NV
+      - name: Install Ruby gems
+        run: bundle install --jobs 4 --retry 3
 
       - name: Build and upload to TestFlight
         env:
@@ -52,5 +73,14 @@ jobs:
           ITC_TEAM_ID: ${{ secrets.ITC_TEAM_ID }}
           TESTFLIGHT_GROUPS: ${{ secrets.TESTFLIGHT_GROUPS }}
           APP_IDENTIFIER: ${{ secrets.APP_IDENTIFIER }}
-          SCHEME: CodeAgentsMobile
-        run: fastlane beta
+        run: bundle exec fastlane beta
+
+      - name: Upload release artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release-artifacts
+          path: |
+            build
+            fastlane/build_logs
+          if-no-files-found: warn

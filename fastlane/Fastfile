@@ -12,6 +12,10 @@ def export_method
   ENV.fetch("EXPORT_METHOD", "app-store")
 end
 
+def build_logs_directory
+  "fastlane/build_logs"
+end
+
 def api_key_from_env
   return nil unless ENV['APP_STORE_KEY_ID']
   app_store_connect_api_key(
@@ -25,12 +29,16 @@ end
 platform :ios do
   desc "Run unit tests"
   lane :tests do
+    setup_ci if ENV["CI"]
     scan(
       project: project_name,
       scheme: scheme_name,
       devices: [ENV.fetch("SIMULATOR_DEVICE", "iPhone 15")],
       clean: true,
-      fail_build: true
+      fail_build: true,
+      output_types: "html,junit",
+      output_directory: "fastlane/test_output",
+      buildlog_path: build_logs_directory
     )
   end
 
@@ -42,11 +50,16 @@ platform :ios do
 
   desc "Build and upload to TestFlight"
   lane :beta do
+    setup_ci if ENV["CI"]
     api_key = api_key_from_env
     build_app(
       project: project_name,
       scheme: scheme_name,
-      export_method: export_method
+      clean: true,
+      export_method: export_method,
+      output_directory: "build",
+      output_name: "CodeAgentsMobile.ipa",
+      buildlog_path: build_logs_directory
     )
 
     upload_to_testflight(

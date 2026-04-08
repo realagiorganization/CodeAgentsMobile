@@ -3,7 +3,7 @@
 Executable specifications for principal CodeAgents Mobile journeys using `pytest-bdd`.
 
 ## Structure
-- `features/core_journeys.feature` — Gherkin scenarios for auth, provisioning, subscriptions, and file safety.
+- `features/core_journeys.feature` — Gherkin scenarios for provider auth, provisioning, subscription purchase and restore, settings credential management, and file safety.
 - `app_simulation.py` — Lightweight domain simulator used by the steps.
 - `test_core_journeys.py` — Step definitions binding Gherkin steps to the simulator.
 
